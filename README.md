@@ -158,6 +158,20 @@ Contributions welcome! See the [Contributing Guide](CONTRIBUTING.md) to get star
 </details>
 
 <details>
+<summary><b>How are environment variables managed across worktrees?</b></summary>
+
+> Emdash automatically manages `.env*` files across worktrees using a **hybrid strategy** by default:
+>
+> - Main repo has `.env.shared` with common variables
+> - Each worktree gets a symlink to `.env.shared` as `.env`
+> - Worktrees can have `.env.local` for overrides
+>
+> You can configure the strategy (symlink, copy, or hybrid) in settings.
+>
+> Full details: see `docs/ENV_FILE_MANAGEMENT.md`.
+</details>
+
+<details>
 <summary><b>How do I add a new provider?</b></summary>
 
 > Emdash is **provider‑agnostic** and built to add CLIs quickly.

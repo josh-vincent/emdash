@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import { projectSettingsService } from './ProjectSettingsService';
+import { envFileService } from './EnvFileService';
 
 type BaseRefInfo = { remote: string; branch: string; fullRef: string };
 
@@ -103,6 +104,15 @@ export class WorktreeService {
       // Ensure codex logs are ignored in this worktree
       this.ensureCodexLogIgnored(worktreePath);
       await this.logWorktreeSyncStatus(projectPath, worktreePath, fetchedBaseRef);
+
+      // Setup environment files based on configured strategy
+      if (settings?.repository?.envFiles) {
+        await envFileService.setupEnvFiles(projectPath, worktreePath, {
+          strategy: settings.repository.envFiles.strategy,
+          patterns: settings.repository.envFiles.patterns || ['.env*'],
+          sharedEnvName: settings.repository.envFiles.sharedEnvName || '.env.shared',
+        });
+      }
 
       const worktreeInfo: WorktreeInfo = {
         id: worktreeId,
@@ -722,6 +732,17 @@ export class WorktreeService {
     }
 
     this.ensureCodexLogIgnored(worktreePath);
+
+    // Setup environment files based on configured strategy
+    const { getAppSettings } = await import('../settings');
+    const settings = getAppSettings();
+    if (settings?.repository?.envFiles) {
+      await envFileService.setupEnvFiles(projectPath, worktreePath, {
+        strategy: settings.repository.envFiles.strategy,
+        patterns: settings.repository.envFiles.patterns || ['.env*'],
+        sharedEnvName: settings.repository.envFiles.sharedEnvName || '.env.shared',
+      });
+    }
 
     const worktreeInfo: WorktreeInfo = {
       id: this.stableIdFromPath(worktreePath),

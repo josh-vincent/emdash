@@ -5,6 +5,11 @@ import { dirname, join } from 'path';
 export interface RepositorySettings {
   branchTemplate: string; // e.g., 'agent/{slug}-{timestamp}'
   pushOnCreate: boolean;
+  envFiles?: {
+    strategy: 'symlink' | 'copy' | 'hybrid'; // How to handle .env files
+    patterns?: string[]; // Which env files to sync (default: ['.env*'])
+    sharedEnvName?: string; // Name of shared env file (default: '.env.shared')
+  };
 }
 
 export interface AppSettings {
@@ -32,6 +37,11 @@ const DEFAULT_SETTINGS: AppSettings = {
   repository: {
     branchTemplate: 'agent/{slug}-{timestamp}',
     pushOnCreate: true,
+    envFiles: {
+      strategy: 'hybrid',
+      patterns: ['.env*'],
+      sharedEnvName: '.env.shared',
+    },
   },
   projectPrep: {
     autoInstallOnOpenInEditor: true,
@@ -152,6 +162,21 @@ function normalizeSettings(input: AppSettings): AppSettings {
 
   out.repository.branchTemplate = template;
   out.repository.pushOnCreate = push;
+
+  // Env files settings
+  const envFiles = (repo as any)?.envFiles || {};
+  out.repository.envFiles = {
+    strategy: ['symlink', 'copy', 'hybrid'].includes(envFiles?.strategy)
+      ? envFiles.strategy
+      : DEFAULT_SETTINGS.repository.envFiles!.strategy,
+    patterns: Array.isArray(envFiles?.patterns)
+      ? envFiles.patterns
+      : DEFAULT_SETTINGS.repository.envFiles!.patterns,
+    sharedEnvName:
+      typeof envFiles?.sharedEnvName === 'string'
+        ? envFiles.sharedEnvName
+        : DEFAULT_SETTINGS.repository.envFiles!.sharedEnvName,
+  };
   // Project prep
   const prep = (input as any)?.projectPrep || {};
   out.projectPrep.autoInstallOnOpenInEditor = Boolean(
